@@ -22,7 +22,9 @@ Diaspora::Application.routes.draw do
     put 'make_profile_photo' => :make_profile_photo
   end
 
-  resources :comments, :only => [:create, :destroy]
+  resources :comments, :only => [:create, :destroy] do
+    resources :likes, :only => [:create, :destroy, :index]
+  end
 
 
   resources :conversations do

@@ -9,10 +9,15 @@ class LikesController < ApplicationController
   respond_to :html, :mobile, :json
 
   def create
-    target = current_user.find_visible_post_by_id params[:status_message_id]
+    if params[:status_message_id]
+      target = current_user.find_visible_post_by_id params[:status_message_id]
+    else
+      target = Comment.find(params[:comment_id])
+    end
+
     positive = (params[:positive] == 'true') ? true : false
     if target
-      @like = current_user.build_like(:positive => positive, :post => target)
+      @like = current_user.build_like(:positive => positive, :target => target)
 
       if @like.save
         Rails.logger.info("event=create type=like user=#{current_user.diaspora_handle} status=success like=#{@like.id} positive=#{positive}")
@@ -21,7 +26,7 @@ class LikesController < ApplicationController
         respond_to do |format|
           format.js { render :status => 201 }
           format.html { render :nothing => true, :status => 201 }
-          format.mobile { redirect_to status_message_path(@like.post_id) }
+          format.mobile { redirect_to status_message_path(@like.target_id) }
         end
       else
         render :nothing => true, :status => 422
@@ -32,7 +37,9 @@ class LikesController < ApplicationController
   end
 
   def destroy
-    if @like = Like.where(:id => params[:id], :author_id => current_user.person.id, :post_id => params[:status_message_id]).first
+    target_id = params[:status_message_id] || params[:comment_id]
+
+    if @like = Like.where(:id => params[:id], :author_id => current_user.person.id, :target_id => target_id).first
       current_user.retract(@like)
     else
       respond_to do |format|
