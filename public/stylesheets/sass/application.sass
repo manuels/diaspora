@@ -1684,8 +1684,8 @@ ul#request_result
 
 .contact_list,
 .aspect_list
-  :height 450px
-  :max-height 450px
+  :height 300px
+  :max-height 300px
 
   :overflow-y auto
   :overflow-x hidden
@@ -1697,7 +1697,7 @@ ul#request_result
 
   .name
     :position absolute
-    :left 70px
+    :left 65px
     :top 10px
 
   .avatar
@@ -1705,10 +1705,6 @@ ul#request_result
     :left 6px
     :height 50px
     :width 50px
-
-  :-webkit-border-radius 0 0 5px 5px
-  :-moz-border-radius 0 0 5px 5px
-  :border-radius 0 0 5px 5px
 
   input.contact_list_search
     :width 100%
@@ -1724,18 +1720,27 @@ ul#request_result
 
   > ul
     :margin 0
-    :padding 0
+    :padding 5px
+      :right 0
 
     > li
-      :position relative
-      :height 50px
-      :padding 4px
-      :border
-        :bottom 1px solid #eee
+      @include border-radius(3px)
 
-      &:last-child
-        :border
-          :bottom none
+      :position relative
+      :display inline-block
+
+      &.hidden
+        :display none
+
+      :height 50px
+      :width 170px
+
+      :margin
+        :bottom 5px
+        :right 5px
+
+      :padding 8px
+      :border 1px solid #ccc
 
       &:hover
         :background
@@ -2209,7 +2214,7 @@ ul.show_comments,
   :top 10px
 
 #aspect_edit_pane
-  :width 400px
+  :width 790px
   .person_tiles
     .tile
       @include border-radius(2px)
@@ -3090,9 +3095,8 @@ ul.left_nav
     :bottom 25px
 
   :border 1px solid #999
+  :width 220px
 
-  :width 240px
-    
   h4
     :margin
       :bottom 10px

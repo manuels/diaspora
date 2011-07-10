@@ -5,17 +5,15 @@
 
 var List = {
   initialize: function() {
-    $(".contact_list_search").live("keyup", function(e) {
+    $("#contact_list_search").live("keyup", function(e) {
       var search = $(this);
-      var list   = $(this).siblings("ul").first();
+      var list   = $("ul", ".contact_list");
       var query  = new RegExp(search.val(),'i');
 
-      $("> li", list).each( function() {
-        var element = $(this);
-        if( !element.text().match(query) ) {
-          if( !element.hasClass('hidden') ) {
-            element.addClass('hidden');
-          }
+      $("> li", list).each( function(idx, element) {
+        element = $(element);
+        if( !element.find(".name").text().match(query) ) {
+          element.addClass('hidden');
         } else {
           element.removeClass('hidden');
         }
