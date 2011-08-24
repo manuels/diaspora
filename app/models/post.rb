@@ -10,12 +10,11 @@ class Post < ActiveRecord::Base
   include Diaspora::Guid
 
   include Diaspora::Likeable
+  include Diaspora::Commentable
 
   xml_attr :diaspora_handle
   xml_attr :public
   xml_attr :created_at
-
-  has_many :comments, :dependent => :destroy
 
   has_many :aspect_visibilities
   has_many :aspects, :through => :aspect_visibilities
@@ -122,17 +121,6 @@ class Post < ActiveRecord::Base
 
   def comment_email_subject
     I18n.t('notifier.a_post_you_shared')
-  end
-
-  # @return [Array<Comment>]
-  def last_three_comments
-    self.comments.order('created_at DESC').limit(3).includes(:author => :profile).reverse
-  end
-
-  # @return [Integer]
-  def update_comments_counter
-    self.class.where(:id => self.id).
-      update_all(:comments_count => self.comments.count)
   end
 end
 
