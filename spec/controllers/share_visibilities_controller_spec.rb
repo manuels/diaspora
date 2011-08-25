@@ -4,10 +4,10 @@
 
 require 'spec_helper'
 
-describe PostVisibilitiesController do
+describe ShareVisibilitiesController do
   before do
     @status = alice.post(:status_message, :text => "hello", :to => alice.aspects.first)
-    @vis = @status.post_visibilities.first
+    @vis = @status.share_visibilities.first
   end
 
   describe '#update' do

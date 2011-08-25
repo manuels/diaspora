@@ -104,7 +104,7 @@ Diaspora::Application.routes.draw do
     get :sharing, :on => :collection
   end
   resources :aspect_memberships, :only   => [:destroy, :create, :update]
-  resources :post_visibilities,  :only   => [:update]
+  resources :share_visibilities,  :only   => [:update]
 
   get 'featured' => "contacts#featured", :as => 'featured_users'
   resources :people, :except => [:edit, :update] do
