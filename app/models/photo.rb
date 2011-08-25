@@ -2,10 +2,14 @@
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
-class Photo < Post
+class Photo < ActiveRecord::Base
   require 'carrierwave/orm/activerecord'
   mount_uploader :processed_image, ProcessedImage
   mount_uploader :unprocessed_image, UnprocessedImage
+
+  include Diaspora::Shareable
+  include Diaspora::Commentable
+  include Diaspora::Likeable
 
   xml_attr :remote_photo_path
   xml_attr :remote_photo_name
@@ -40,12 +44,17 @@ class Photo < Post
   end
 
   def self.diaspora_initialize(params = {})
-    photo = super(params)
+    new_photo = self.new params.to_hash
+    new_photo.author = params[:author]
+    new_photo.public = params[:public] if params[:public]
+    new_photo.pending = params[:pending] if params[:pending]
+    new_photo.diaspora_handle = new_photo.author.diaspora_handle
+
     image_file = params.delete(:user_file)
-    photo.random_string = ActiveSupport::SecureRandom.hex(10)
-    photo.unprocessed_image.store! image_file
-    photo.update_remote_path
-    photo
+    new_photo.random_string = ActiveSupport::SecureRandom.hex(10)
+    new_photo.unprocessed_image.store! image_file
+    new_photo.update_remote_path
+    new_photo
   end
 
   def not_processed?
@@ -101,6 +110,10 @@ class Photo < Post
     return false if self.processed? || (!unprocessed_image.path.nil? && unprocessed_image.path.include?('.gif'))
     processed_image.store!(unprocessed_image) #Ultra naive
     save!
+  end
+
+  def comment_email_subject
+    I18n.t("photos.comment_email_subject", :name => author.name)
   end
 
   def mutable?

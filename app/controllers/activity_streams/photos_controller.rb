@@ -48,7 +48,7 @@ class ActivityStreams::PhotosController < ApplicationController
   end
 
   def show
-    @photo = current_user.find_visible_post_by_id(params[:id])
+    @photo = current_user.find_visible_photo_by_id(params[:id])
     respond_with @photo
   end
 

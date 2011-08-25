@@ -62,6 +62,12 @@ describe PhotosController do
         assigns[:photo].should == @alices_photo
         @controller.ownership.should be_true
       end
+
+      it 'succeeds with a AS/photo' do
+        photo = Factory(:activity_streams_photo, :author => bob.person)
+        get :show, :id => photo.id
+        response.should be_success
+      end
     end
 
     context "private photo user can see" do

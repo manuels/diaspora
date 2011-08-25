@@ -73,6 +73,16 @@ module Diaspora
               end
             }
 
+            xml.photos {
+              user.visible_photos.find_all_by_author_id(user_person_id).each do |photo|
+                #post.comments.each do |comment|
+                #  post_doc << comment.to_xml
+                #end
+
+                xml.parent << photo.to_xml
+              end
+            }
+
             xml.people {
               user.contacts.each do |contact|
                 person = contact.person

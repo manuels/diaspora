@@ -46,11 +46,6 @@ describe PostsController do
         }.should change(note, :unread).from(true).to(false)
       end
 
-      it 'succeeds with a AS/photo' do
-        photo = Factory(:activity_streams_photo, :author => bob.person)
-        get :show, :id => photo.id
-        response.should be_success
-      end
     end
 
     context 'user not signed in' do

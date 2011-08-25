@@ -7,15 +7,31 @@ module Diaspora
     module Querying
 
       def find_visible_post_by_id( id, opts={} )
+        self.find_visible_shareable_by_id(Post, id, opts)
+      end
+
+      def find_visible_photo_by_id( id, opts={} )
+        self.find_visible_shareable_by_id(Photo, id, opts)
+      end
+
+      def find_visible_shareable_by_id( base_class, id, opts={} )
         key = opts.delete(:key) || :id
-        post = Post.where(key => id).joins(:contacts).where(:contacts => {:user_id => self.id}).where(opts).select("posts.*").first
-        post ||= Post.where(key => id, :author_id => self.person.id).where(opts).first
-        post ||= Post.where(key => id, :public => true).where(opts).first
+        shareable = base_class.where(key => id).joins(:contacts).where(:contacts => {:user_id => self.id}).where(opts).select(base_class.table_name+".*").first
+        shareable ||= base_class.where(key => id, :author_id => self.person.id).where(opts).first
+        shareable ||= base_class.where(key => id, :public => true).where(opts).first
       end
 
       def visible_posts(opts = {})
+        opts[:type] ||= 'StatusMessage'
+        visible_shareable(Post, opts)
+      end
+
+      def visible_photos(opts = {})
+        visible_shareable(Photo, opts)
+      end
+
+      def visible_shareable(base_class, opts = {})
         defaults = {
-          :type => ['StatusMessage', 'Photo'],
           :order => 'updated_at DESC',
           :limit => 15,
           :hidden => false
@@ -23,15 +39,17 @@ module Diaspora
         opts = defaults.merge(opts)
 
         order_field = opts[:order].split.first.to_sym
-        order_with_table = 'posts.' + opts[:order]
+        order_with_table = base_class.table_name + '.' + opts[:order]
 
         opts[:max_time] = Time.at(opts[:max_time]) if opts[:max_time].is_a?(Integer)
         opts[:max_time] ||= Time.now + 1
 
-        select_clause ='DISTINCT posts.id, posts.updated_at AS updated_at, posts.created_at AS created_at'
+        select_clause = "DISTINCT %s.id, %s.updated_at AS updated_at, %s.created_at AS created_at" % [base_class.table_name, base_class.table_name, base_class.table_name]
 
-        posts_from_others = Post.joins(:contacts).where( :pending => false, :type => opts[:type], :share_visibilities => {:hidden => opts[:hidden]}, :contacts => {:user_id => self.id})
-        posts_from_self = self.person.posts.where(:pending => false, :type => opts[:type])
+        posts_from_others = base_class.joins(:contacts).where( :pending => false, :share_visibilities => {:hidden => opts[:hidden]}, :contacts => {:user_id => self.id})
+        posts_from_self = self.person.send(base_class.name.tableize).where(:pending => false)
+        posts_from_others = posts_from_others.where(:type => opts[:type]) if opts.has_key?(:type)
+        posts_from_self = posts_from_self.where(:type => opts[:type]) if opts.has_key?(:type)
 
         if opts[:by_members_of]
           posts_from_others = posts_from_others.joins(:contacts => :aspect_memberships).where(
@@ -40,8 +58,8 @@ module Diaspora
         end
 
         unless defined?(ActiveRecord::ConnectionAdapters::SQLite3Adapter) && ActiveRecord::Base.connection.class == ActiveRecord::ConnectionAdapters::SQLite3Adapter
-          posts_from_others = posts_from_others.select(select_clause).limit(opts[:limit]).order(order_with_table).where(Post.arel_table[order_field].lt(opts[:max_time]))
-          posts_from_self = posts_from_self.select(select_clause).limit(opts[:limit]).order(order_with_table).where(Post.arel_table[order_field].lt(opts[:max_time]))
+          posts_from_others = posts_from_others.select(select_clause).limit(opts[:limit]).order(order_with_table).where(base_class.arel_table[order_field].lt(opts[:max_time]))
+          posts_from_self = posts_from_self.select(select_clause).limit(opts[:limit]).order(order_with_table).where(base_class.arel_table[order_field].lt(opts[:max_time]))
           all_posts = "(#{posts_from_others.to_sql}) UNION ALL (#{posts_from_self.to_sql}) ORDER BY #{opts[:order]} LIMIT #{opts[:limit]}"
         else
           posts_from_others = posts_from_others.select(select_clause)
@@ -49,17 +67,18 @@ module Diaspora
           all_posts = "#{posts_from_others.to_sql} UNION ALL #{posts_from_self.to_sql} ORDER BY #{opts[:order]} LIMIT #{opts[:limit]}"
         end
 
-        post_ids = Post.connection.select_values(all_posts)
+        post_ids = base_class.connection.select_values(all_posts)
 
-        Post.where(:id => post_ids).select('DISTINCT posts.*').limit(opts[:limit]).order(order_with_table)
+        base_class.where(:id => post_ids).select('DISTINCT '+base_class.table_name+'.*').limit(opts[:limit]).order(order_with_table)
       end
 
       def contact_for(person)
         return nil unless person
         contact_for_person_id(person.id)
       end
-      def aspects_with_post(post_id)
-        self.aspects.joins(:aspect_visibilities).where(:aspect_visibilities => {:shareable_id => post_id, :shareable_type => 'Post'})
+      def aspects_with_shareable(shareable)
+        type = shareable.class.base_class.to_s
+        self.aspects.joins(:aspect_visibilities).where(:aspect_visibilities => {:shareable_id => shareable.id, :shareable_type => type})
       end
 
       def contact_for_person_id(person_id)
@@ -96,20 +115,28 @@ module Diaspora
       end
 
       def posts_from(person)
-        return self.person.posts.where(:pending => false).order("created_at DESC") if person == self.person
+        shareable_from(person, Post)
+      end
+
+      def photos_from(person)
+        shareable_from(person, Photo)
+      end
+
+      def shareable_from(person, base_class)
+        return self.person.send(base_class.to_s.tableize).where(:pending => false).order("created_at DESC") if person == self.person
         con = Contact.arel_table
-        p = Post.arel_table
-        post_ids = []
+        p = base_class.arel_table
+        shareable_ids = []
         if contact = self.contact_for(person)
-          post_ids = Post.connection.select_values(
-            contact.share_visibilities.where(:hidden => false, :shareable_type => 'Post').select('share_visibilities.shareable_id').to_sql
+          shareable_ids = base_class.connection.select_values(
+            contact.share_visibilities.where(:hidden => false, :shareable_type => base_class.to_s).select('share_visibilities.shareable_id').to_sql
           )
         end
-        post_ids += Post.connection.select_values(
-          person.posts.where(:public => true).select('posts.id').to_sql
+        shareable_ids += base_class.connection.select_values(
+          person.send(base_class.to_s.tableize).where(:public => true).select(base_class.to_s.tableize+'.id').to_sql
         )
 
-        Post.where(:id => post_ids, :pending => false).select('DISTINCT posts.*').order("posts.created_at DESC")
+        base_class.where(:id => shareable_ids, :pending => false).select('DISTINCT '+base_class.table_name+'.*').order(base_class.table_name+".created_at DESC")
       end
     end
   end

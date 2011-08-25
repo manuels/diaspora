@@ -18,14 +18,14 @@
   = "#{@app}"
 
 #main_stream.stream.canvas
-  - if @posts.length > 0
-    - for post in @posts
+  - if @photos.length > 0
+    - for photos in @photos
       .image-element.stream_element
         .hold-me
-          = link_to(image_tag(post.image_url), post_path(post))
+          = link_to(image_tag(photo.image_url), photo_path(photo))
           .via
-            = post.author.name
-          .time{:integer => post.created_at.to_i}
+            = photo.author.name
+          .time{:integer => photo.created_at.to_i}
     #pagination
       =link_to(t('more'), next_page_path, :class => 'paginate')
 

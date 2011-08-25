@@ -3,9 +3,9 @@
 #   the COPYRIGHT file.
 
 module AspectGlobalHelper
-  def aspects_with_post(aspects, post)
+  def aspects_with_shareable(aspects, shareable)
     aspects.select do |aspect|
-      AspectVisibility.exists?(:aspect_id => aspect.id, :shareable_id => post.id, :shareable_type => 'Post')
+      AspectVisibility.exists?(:aspect_id => aspect.id, :shareable_id => shareable.id, :shareable_type => shareable.class.base_class.to_s)
     end
   end
 

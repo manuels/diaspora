@@ -2,7 +2,7 @@
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
-class ActivityStreams::Photo < Post
+class ActivityStreams::Photo < Photo
   include Diaspora::Socketable
 
   xml_name self.name.underscore.gsub!('/', '-')
@@ -37,25 +37,21 @@ class ActivityStreams::Photo < Post
   # @param [Hash] json An {http://www.activitystrea.ms ActivityStreams} compliant (we hope!) json hash.
   # @return [ActivityStreams::Photo]
   def self.from_activity(json)
-    self.new(
-      :image_url => json["object"]["image"]["url"],
-      :image_height => json["object"]["image"]["height"],
-      :image_width => json["object"]["image"]["width"],
-      :object_url => json["object"]["url"],
-      :objectId => json["object"]["id"],
+    self.new do |p|
+      p.image_url = json["object"]["image"]["url"]
+      p.image_height = json["object"]["image"]["height"]
+      p.image_width = json["object"]["image"]["width"]
+      p.object_url = json["object"]["url"]
+      p.objectId = json["object"]["id"]
 
-      :provider_display_name => json["provider"]["displayName"],
-      :actor_url => json["actor"]["url"]
-    )
+      p.provider_display_name = json["provider"]["displayName"]
+      p.actor_url = json["actor"]["url"]
+    end
   end
 
   # A hack used in the stream_element partial to display cubbi.es posts correctly.
   # A better solution is needed.
   # @return [Boolean] true
   def activity_streams?; true; end
-
-  def comment_email_subject
-    I18n.t("photos.comment_email_subject", :name => author.name)
-  end
 end
 

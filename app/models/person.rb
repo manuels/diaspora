@@ -26,9 +26,10 @@ class Person < ActiveRecord::Base
     diaspora_handle.downcase! unless diaspora_handle.blank?
   end
 
-  has_many :contacts, :dependent => :destroy # Other people's contacts for this person
-  has_many :posts, :foreign_key => :author_id, :dependent => :destroy # This person's own posts
-  has_many :comments, :foreign_key => :author_id, :dependent => :destroy # This person's own comments
+  has_many :contacts, :dependent => :destroy #Other people's contacts for this person
+  has_many :posts, :foreign_key => :author_id, :dependent => :destroy #his own posts
+  has_many :photos, :foreign_key => :author_id, :dependent => :destroy #his own photos
+  has_many :comments, :foreign_key => :author_id, :dependent => :destroy #his own comments
 
   belongs_to :owner, :class_name => 'User'
 
@@ -248,7 +249,7 @@ class Person < ActiveRecord::Base
   end
 
   def has_photos?
-    self.posts.where(:type => "Photo").exists?
+    self.photos.exists?
   end
 
   def as_json( opts = {} )
