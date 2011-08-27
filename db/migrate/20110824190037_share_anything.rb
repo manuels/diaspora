@@ -27,13 +27,13 @@ class ShareAnything < ActiveRecord::Migration
   def self.down
     rename_column :aspect_visibilities, :shareable_id, :post_id
     add_foreign_key :aspect_visibilities, :posts
+    add_index :aspect_visibilities, [:post_id, :aspect_id]
     add_index :aspect_visibilities, :post_id
     remove_column :aspect_visibilities, :shareable_type
 
     rename_table :share_visibilities, :post_visibilities 
     rename_column :post_visibilities, :shareable_id, :post_id
     add_foreign_key :post_visibilities, :posts
-    add_index :post_visibilities, :post_id_and_post_id
     add_index :post_visibilities, [:contact_id, :post_id]
     add_index :post_visibilities, [:post_id, :hidden, :contact_id]
     add_index :post_visibilities, :post_id

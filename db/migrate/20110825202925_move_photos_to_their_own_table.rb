@@ -55,18 +55,18 @@ SQL
   def self.down
     execute <<SQL
       INSERT INTO posts
-        SELECT id, author_id, public, diaspora_handle, guid, pending, 'Photo' AS type, text, remote_photo_path, remote_photo_name, random_string, processed_image,
-               youtube_titles, created_at, updated_at, unprocessed_image, object_url, image_url, image_height, image_width, provider_display_name,
+        SELECT NULL AS id, author_id, public, diaspora_handle, guid, pending, 'Photo' AS type, text, remote_photo_path, remote_photo_name, random_string, 
+               processed_image, youtube_titles, created_at, updated_at, unprocessed_image, object_url, image_url, image_height, image_width, provider_display_name,
                actor_url, objectId, root_guid, status_message_guid, likes_count
-          FROM posts
-          WHERE type = NULL
+          FROM photos
+          WHERE type IS NULL
 SQL
     execute <<SQL
       INSERT INTO posts
-        SELECT id, author_id, public, diaspora_handle, guid, pending, type, text, remote_photo_path, remote_photo_name, random_string, processed_image,
+        SELECT NULL AS id, author_id, public, diaspora_handle, guid, pending, type, text, remote_photo_path, remote_photo_name, random_string, processed_image,
                youtube_titles, created_at, updated_at, unprocessed_image, object_url, image_url, image_height, image_width, provider_display_name,
                actor_url, objectId, root_guid, status_message_guid, likes_count
-          FROM posts
+          FROM photos
           WHERE type = 'ActivityStreams::Photo'
 SQL
 
@@ -75,14 +75,18 @@ SQL
         SET
           aspect_visibilities.shareable_id=posts.id,
           aspect_visibilities.shareable_type='Post'
-        WHERE posts.guid=photos.guid
+        WHERE
+          posts.guid=photos.guid AND
+          photos.id=aspect_visibilities.shareable_id
 SQL
     execute <<SQL
       UPDATE share_visibilities, posts, photos
         SET
           share_visibilities.shareable_id=posts.id,
           share_visibilities.shareable_type='Post'
-        WHERE posts.guid=photos.guid
+        WHERE
+          posts.guid=photos.guid AND
+          photos.id=share_visibilities.shareable_id
 SQL
 
     execute "DROP TABLE photos"
