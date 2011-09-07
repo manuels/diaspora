@@ -18,8 +18,8 @@ describe Postzord::Receiver::LocalBatch do
   end
 
   describe '#perform!' do
-    it 'calls .create_post_visibilities' do
-      receiver.should_receive(:create_post_visibilities)
+    it 'calls .create_share_visibilities' do
+      receiver.should_receive(:create_share_visibilities)
       receiver.perform!
     end
 
@@ -39,10 +39,10 @@ describe Postzord::Receiver::LocalBatch do
     end
   end
 
-  describe '#create_post_visibilities' do
-    it 'calls Postvisibility.batch_import' do
-      PostVisibility.should_receive(:batch_import)
-      receiver.create_post_visibilities
+  describe '#create_share_visibilities' do
+    it 'calls ShareVisibility.batch_import' do
+      ShareVisibility.should_receive(:batch_import)
+      receiver.create_share_visibilities
     end
   end
 
@@ -102,7 +102,7 @@ describe Postzord::Receiver::LocalBatch do
 
     it 'does not call create_visibilities and notify_mentioned_users' do
       receiver.should_not_receive(:notify_mentioned_users)
-      receiver.should_not_receive(:create_post_visibilities)
+      receiver.should_not_receive(:create_share_visibilities)
       receiver.perform!
     end
   end

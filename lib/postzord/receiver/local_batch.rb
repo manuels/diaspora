@@ -13,7 +13,7 @@ module Postzord
         if @object.respond_to?(:relayable?)
           receive_relayable
         else
-          create_post_visibilities
+          create_share_visibilities
         end
         notify_mentioned_users if @object.respond_to?(:mentions)
 
@@ -31,12 +31,12 @@ module Postzord
         @object
       end
 
-      # Batch import post visibilities for the recipients of the given @object
+      # Batch import share visibilities for the recipients of the given @object
       # @note performs a bulk insert into mySQL
       # @return [void]
-      def create_post_visibilities
+      def create_share_visibilities
         contacts = Contact.where(:user_id => @recipient_user_ids, :person_id => @object.author_id)
-        PostVisibility.batch_import(contacts, object)
+        ShareVisibility.batch_import(contacts, object)
       end
 
       # Notify any mentioned users within the @object's text

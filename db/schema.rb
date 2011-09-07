@@ -10,7 +10,11 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(:version => 20110830170929) do
+=======
+ActiveRecord::Schema.define(:version => 20110824190037) do
+>>>>>>> Introduced Shareable
 
   create_table "aspect_memberships", :force => true do |t|
     t.integer  "aspect_id",  :null => false
@@ -24,15 +28,14 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
   add_index "aspect_memberships", ["contact_id"], :name => "index_aspect_memberships_on_contact_id"
 
   create_table "aspect_visibilities", :force => true do |t|
-    t.integer  "post_id",    :null => false
-    t.integer  "aspect_id",  :null => false
+    t.integer  "shareable_id",                       :null => false
+    t.integer  "aspect_id",                          :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "shareable_type", :default => "Post", :null => false
   end
 
   add_index "aspect_visibilities", ["aspect_id"], :name => "index_aspect_visibilities_on_aspect_id"
-  add_index "aspect_visibilities", ["post_id", "aspect_id"], :name => "index_aspect_visibilities_on_post_id_and_aspect_id", :unique => true
-  add_index "aspect_visibilities", ["post_id"], :name => "index_aspect_visibilities_on_post_id"
 
   create_table "aspects", :force => true do |t|
     t.string   "name",                               :null => false
@@ -47,21 +50,21 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
   add_index "aspects", ["user_id"], :name => "index_aspects_on_user_id"
 
   create_table "comments", :force => true do |t|
-    t.text     "text",                                   :null => false
-    t.integer  "post_id",                                :null => false
-    t.integer  "author_id",                              :null => false
-    t.string   "guid",                                   :null => false
+    t.text     "text",                                        :null => false
+    t.integer  "commentable_id",                              :null => false
+    t.integer  "author_id",                                   :null => false
+    t.string   "guid",                                        :null => false
     t.text     "author_signature"
     t.text     "parent_author_signature"
     t.text     "youtube_titles"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "likes_count",             :default => 0, :null => false
+    t.integer  "likes_count",             :default => 0,      :null => false
+    t.string   "commentable_type",        :default => "Post", :null => false
   end
 
   add_index "comments", ["author_id"], :name => "index_comments_on_person_id"
   add_index "comments", ["guid"], :name => "index_comments_on_guid", :unique => true
-  add_index "comments", ["post_id"], :name => "index_comments_on_post_id"
 
   create_table "contacts", :force => true do |t|
     t.integer  "user_id",                       :null => false
@@ -243,19 +246,6 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
     t.datetime "updated_at"
   end
 
-  create_table "post_visibilities", :force => true do |t|
-    t.integer  "post_id",                       :null => false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.boolean  "hidden",     :default => false, :null => false
-    t.integer  "contact_id",                    :null => false
-  end
-
-  add_index "post_visibilities", ["contact_id", "post_id"], :name => "index_post_visibilities_on_contact_id_and_post_id", :unique => true
-  add_index "post_visibilities", ["contact_id"], :name => "index_post_visibilities_on_contact_id"
-  add_index "post_visibilities", ["post_id", "hidden", "contact_id"], :name => "index_post_visibilities_on_post_id_and_hidden_and_contact_id", :unique => true
-  add_index "post_visibilities", ["post_id"], :name => "index_post_visibilities_on_post_id"
-
   create_table "posts", :force => true do |t|
     t.integer  "author_id",                                              :null => false
     t.boolean  "public",                              :default => false, :null => false
@@ -342,6 +332,17 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
 
   add_index "services", ["user_id"], :name => "index_services_on_user_id"
 
+  create_table "share_visibilities", :force => true do |t|
+    t.integer  "shareable_id",                       :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.boolean  "hidden",         :default => false,  :null => false
+    t.integer  "contact_id",                         :null => false
+    t.string   "shareable_type", :default => "Post", :null => false
+  end
+
+  add_index "share_visibilities", ["contact_id"], :name => "index_post_visibilities_on_contact_id"
+
   create_table "tag_followings", :force => true do |t|
     t.integer  "tag_id",     :null => false
     t.integer  "user_id",    :null => false
@@ -419,10 +420,8 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
   add_foreign_key "aspect_memberships", "contacts", :name => "aspect_memberships_contact_id_fk", :dependent => :delete
 
   add_foreign_key "aspect_visibilities", "aspects", :name => "aspect_visibilities_aspect_id_fk", :dependent => :delete
-  add_foreign_key "aspect_visibilities", "posts", :name => "aspect_visibilities_post_id_fk", :dependent => :delete
 
   add_foreign_key "comments", "people", :name => "comments_author_id_fk", :column => "author_id", :dependent => :delete
-  add_foreign_key "comments", "posts", :name => "comments_post_id_fk", :dependent => :delete
 
   add_foreign_key "contacts", "people", :name => "contacts_person_id_fk", :dependent => :delete
 
@@ -441,13 +440,12 @@ ActiveRecord::Schema.define(:version => 20110830170929) do
 
   add_foreign_key "notification_actors", "notifications", :name => "notification_actors_notification_id_fk", :dependent => :delete
 
-  add_foreign_key "post_visibilities", "contacts", :name => "post_visibilities_contact_id_fk", :dependent => :delete
-  add_foreign_key "post_visibilities", "posts", :name => "post_visibilities_post_id_fk", :dependent => :delete
-
   add_foreign_key "posts", "people", :name => "posts_author_id_fk", :column => "author_id", :dependent => :delete
 
   add_foreign_key "profiles", "people", :name => "profiles_person_id_fk", :dependent => :delete
 
   add_foreign_key "services", "users", :name => "services_user_id_fk", :dependent => :delete
+
+  add_foreign_key "share_visibilities", "contacts", :name => "post_visibilities_contact_id_fk", :dependent => :delete
 
 end

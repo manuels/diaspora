@@ -53,7 +53,7 @@ describe User do
 
     it "respects the :type option" do
       photo = bob.post(:photo, :pending => false, :user_file=> File.open(photo_fixture_name), :to => @bobs_aspect)
-      alice.visible_posts.should include(photo)
+      alice.visible_photos.should include(photo)
       alice.visible_posts(:type => 'StatusMessage').should_not include(photo)
     end
 
@@ -72,7 +72,7 @@ describe User do
       before do
         aspect_to_post = bob.aspects.where(:name => "generic").first
         @status = bob.post(:status_message, :text=> "hello", :to => aspect_to_post)
-        @vis = @status.post_visibilities.first
+        @vis = @status.share_visibilities.first
       end
 
       it "pulls back non hidden posts" do

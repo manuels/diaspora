@@ -240,7 +240,7 @@ describe Postzord::Dispatcher do
       it 'queues a batch receive' do
         local_people = []
         local_people << alice.person
-        Resque.should_receive(:enqueue).with(Job::ReceiveLocalBatch, @sm.class.base_class, @sm.id, [alice.id]).once
+        Resque.should_receive(:enqueue).with(Jobs::ReceiveLocalBatch, @sm.class.to_s, @sm.id, [alice.id]).once
         @mailman.send(:deliver_to_local, local_people)
       end
 

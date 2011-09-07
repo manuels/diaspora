@@ -7,7 +7,10 @@ class PhotosController < ApplicationController
 
   helper_method :parent, :photo, :additional_photos, :next_photo, :previous_photo, :ownership
 
-  respond_to :html, :json
+  respond_to :html,
+             :mobile,
+             :json,
+             :xml
 
   def index
     @post_type = :photos

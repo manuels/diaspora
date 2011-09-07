@@ -85,7 +85,7 @@ class Chubbies
 
   def self.kill
     pid = self.get_pid
-    `kill -9 #{pid}` if pid.present?
+    `kill -9 #{pid}` if not pid.nil? and pid.present?
   end
 
   def self.running?
