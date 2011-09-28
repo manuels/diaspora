@@ -31,6 +31,7 @@ class Person < ActiveRecord::Base
   has_many :comments, :foreign_key => :author_id, :dependent => :destroy # This person's own comments
 
   belongs_to :owner, :class_name => 'User'
+  belongs_to :pod
 
   has_many :notification_actors
   has_many :notifications, :through => :notification_actors

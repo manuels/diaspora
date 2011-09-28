@@ -32,7 +32,7 @@ module Postzord
         @object ||= Diaspora::Parser.from_xml(xml)
 
         Rails.logger.info("event=receive status=start recipient=#{@user_person.diaspora_handle} payload_type=#{@object.class} sender=#{@sender.diaspora_handle}")
-
+        
         if self.validate_object
           set_author!
           receive_object

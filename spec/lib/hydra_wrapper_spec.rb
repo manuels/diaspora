@@ -7,19 +7,19 @@ require 'hydra_wrapper'
 describe HydraWrapper do
   before do
     @people = ["person", "person2", "person3"]
-    @wrapper = HydraWrapper.new(stub, @people, "<encoded_xml>", stub)
+    @wrapper = HydraWrapper.new(stub, @people, "<xml>", stub)
   end
 
   describe 'initialize' do
     it 'it sets the proper instance variables' do
       user = "user"
-      encoded_object_xml = "encoded xml"
+      object_xml = "xml"
       dispatcher_class = "Postzord::Dispatcher::Private"
 
-      wrapper = HydraWrapper.new(user, @people, encoded_object_xml, dispatcher_class)
+      wrapper = HydraWrapper.new(user, @people, object_xml, dispatcher_class)
       wrapper.user.should == user
       wrapper.people.should == @people
-      wrapper.encoded_object_xml.should == encoded_object_xml
+      wrapper.object_xml.should == object_xml
     end
   end
 
@@ -33,11 +33,11 @@ describe HydraWrapper do
 
   describe '#salmon' do
     it 'calls the salmon method on the dispatcher class (and memoizes)' do
-      Base64.stub(:decode64).and_return(@wrapper.encoded_object_xml + 'decoded')
-      decoded = Base64.decode64(@wrapper.encoded_object_xml)
+      #Base64.stub(:decode64).and_return(@wrapper.encoded_object_xml + 'decoded')
+      decoded = @wrapper.object_xml
       @wrapper.dispatcher_class.should_receive(:salmon).with(@wrapper.user, decoded).once.and_return(true)
-      @wrapper.salmon
-      @wrapper.salmon
+      @wrapper.salmon('joindiaspora.com')
+      @wrapper.salmon('joindiaspora.com')
     end
   end
 

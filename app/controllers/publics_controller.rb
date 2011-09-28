@@ -6,7 +6,7 @@ class PublicsController < ApplicationController
   require File.join(Rails.root, '/lib/diaspora/parser')
   require File.join(Rails.root, '/lib/postzord/receiver/public')
   require File.join(Rails.root, '/lib/postzord/receiver/private')
-  include Diaspora::Parser
+  include Diaspora::Parser #TODO: can this line be removed?
 
   skip_before_filter :set_header_data
   skip_before_filter :which_action_and_user
@@ -16,6 +16,12 @@ class PublicsController < ApplicationController
 
   respond_to :html
   respond_to :xml, :only => :post
+
+  NATIVE_VERSION = '2010-11-23T00:00Z'
+  SUPPORTED_VERSIONS = [
+    # add new versions here at the top
+    '2010-11-23T00:00Z', # release date of very first diaspora version
+  ]
 
   def allow_cross_origin
     headers["Access-Control-Allow-Origin"] = "*"
@@ -51,11 +57,17 @@ class PublicsController < ApplicationController
   end
 
   def receive_public
-    Resque.enqueue(Jobs::ReceiveUnencryptedSalmon, CGI::unescape(params[:xml]))
+    params[:version] ||= '2010-11-23T00:00Z'
+    render :xml => SUPPORTED_VERSIONS, :status => 405 unless is_requested_version_supported?
+
+    Resque.enqueue(Jobs::ReceiveUnencryptedSalmon, Pod.cast(CGI::unescape(params[:xml]), params[:version]))
     render :nothing => true, :status => :ok
   end
 
   def receive
+    params[:version] ||= '2010-11-23T00:00Z'
+    render :xml => SUPPORTED_VERSIONS, :status => 405 unless is_requested_version_supported?
+
     person = Person.where(:guid => params[:guid]).first
 
     if person.nil? || person.owner_id.nil?
@@ -65,13 +77,17 @@ class PublicsController < ApplicationController
     end
 
     @user = person.owner
-    Resque.enqueue(Jobs::ReceiveEncryptedSalmon, @user.id, CGI::unescape(params[:xml]))
+    Resque.enqueue(Jobs::ReceiveEncryptedSalmon, @user.id, Pod.cast(CGI::unescape(params[:xml]), params[:version]))
 
     render :nothing => true, :status => 202
   end
 
 
   private
+
+  def is_requested_version_supported?()
+    SUPPORTED_VERSIONS.include?(params[:version])
+  end
 
   def check_for_xml
     if params[:xml].nil?

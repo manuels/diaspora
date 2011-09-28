@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110926120220) do
+ActiveRecord::Schema.define(:version => 20110928210838) do
 
   create_table "aspect_memberships", :force => true do |t|
     t.integer  "aspect_id",  :null => false
@@ -230,17 +230,20 @@ ActiveRecord::Schema.define(:version => 20110926120220) do
     t.integer  "owner_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "pod_id"
   end
 
   add_index "people", ["diaspora_handle"], :name => "index_people_on_diaspora_handle", :unique => true
   add_index "people", ["guid"], :name => "index_people_on_guid", :unique => true
   add_index "people", ["owner_id"], :name => "index_people_on_owner_id", :unique => true
+  add_index "people", ["pod_id"], :name => "people_pod_id_fk"
 
   create_table "pods", :force => true do |t|
     t.string   "host"
     t.boolean  "ssl"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "supported_versions", :default => "--- \n- 2010-11-23T00:00Z\n", :null => false
   end
 
   create_table "post_visibilities", :force => true do |t|
@@ -442,6 +445,8 @@ ActiveRecord::Schema.define(:version => 20110926120220) do
   add_foreign_key "messages", "people", :name => "messages_author_id_fk", :column => "author_id", :dependent => :delete
 
   add_foreign_key "notification_actors", "notifications", :name => "notification_actors_notification_id_fk", :dependent => :delete
+
+  add_foreign_key "people", "pods", :name => "people_pod_id_fk"
 
   add_foreign_key "post_visibilities", "contacts", :name => "post_visibilities_contact_id_fk", :dependent => :delete
   add_foreign_key "post_visibilities", "posts", :name => "post_visibilities_post_id_fk", :dependent => :delete

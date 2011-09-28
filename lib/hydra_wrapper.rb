@@ -9,16 +9,17 @@ class HydraWrapper
 
   OPTS = {:max_redirects => 3, :timeout => 5000, :method => :post}
 
-  attr_reader :failed_people, :user, :encoded_object_xml
+  attr_reader :failed_people, :user, :object_xml
   attr_accessor :dispatcher_class, :people, :hydra
 
-  def initialize(user, people, encoded_object_xml, dispatcher_class)
+  def initialize(user, people, object_xml, dispatcher_class)
     @user = user
+    @salmon = {}
     @failed_people = []
     @hydra = Typhoeus::Hydra.new
     @people = people
     @dispatcher_class = dispatcher_class
-    @encoded_object_xml = encoded_object_xml
+    @object_xml = object_xml
   end
 
   # Delegates run to the @hydra
@@ -26,9 +27,15 @@ class HydraWrapper
     @hydra.run
   end
 
+  # @param [String] url of pod the salmon is sent to
   # @return [Salmon]
-  def salmon
-    @salmon ||= @dispatcher_class.salmon(@user, Base64.decode64(@encoded_object_xml))
+  def salmon(url)
+    if defined? Pod
+      xml = ::Pod.find_or_create_by_url(url).cast(@object_xml)
+    else
+      xml = @object_xml
+    end
+    @salmon[url] ||= @dispatcher_class.salmon(@user, xml)
   end
 
   # Group people on their receiving_urls
@@ -42,7 +49,7 @@ class HydraWrapper
   # Inserts jobs for all @people
   def enqueue_batch
     grouped_people.each do |receive_url, people_for_receive_url|
-      if xml = salmon.xml_for(people_for_receive_url.first)
+      if xml = salmon(receive_url).xml_for(people_for_receive_url.first)
         self.insert_job(receive_url, xml, people_for_receive_url)
       end
     end
@@ -63,10 +70,15 @@ class HydraWrapper
   def prepare_request!(request, people_for_receive_url)
     request.on_complete do |response|
       # Save the reference to the pod to the database if not already present
-      Pod.find_or_create_by_url(response.effective_url)
+      pod = ::Pod.find_or_create_by_url(response.effective_url)
 
       if redirecting_to_https?(response) 
         Person.url_batch_update(people_for_receive_url, response.headers_hash['Location'])
+      end
+
+      if response.code == 405
+        pod.supported_versions = Array.from_xml(response.body)
+        pod.save!
       end
 
       unless response.success?

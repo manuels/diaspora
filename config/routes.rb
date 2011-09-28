@@ -123,12 +123,14 @@ Diaspora::Application.routes.draw do
   # Federation
 
   controller :publics do
-    get 'webfinger'             => :webfinger
-    get 'hcard/users/:guid'     => :hcard
-    get '.well-known/host-meta' => :host_meta
-    post 'receive/users/:guid'  => :receive
-    post 'receive/public'       => :receive_public
-    get 'hub'                   => :hub
+    get 'webfinger'                      => :webfinger
+    get 'hcard/users/:guid'              => :hcard
+    get '.well-known/host-meta'          => :host_meta
+    post 'receive/users/:guid'           => :receive
+    post 'receive/users/:guid/:version'  => :receive
+    post 'receive/public'                => :receive_public
+    post 'receive/public/:version'       => :receive_public
+    get 'hub'                            => :hub
   end
 
 
